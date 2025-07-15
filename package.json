@@ -1,0 +1,35 @@
+{
+  "name": "music-league-extension",
+  "version": "1.0.0",
+  "description": "A companion web extension for the music league website",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "build:extension": "vite build && node scripts/build-extension.js"
+  },
+  "devDependencies": {
+    "@samrum/vite-plugin-web-extension": "^5.1.1",
+    "@types/chrome": "^0.0.254",
+    "vite": "^5.0.8",
+    "vite-plugin-web-extension": "^4.0.0"
+  },
+  "keywords": [
+    "web-extension",
+    "chrome",
+    "firefox",
+    "music-league",
+    "vite",
+    "react"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@primeuix/themes": "^1.2.1",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "primeicons": "^7.0.0",
+    "primevue": "^4.0.0",
+    "vue": "^3.5.17"
+  }
+}

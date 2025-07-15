@@ -1,0 +1,90 @@
+:root {
+  --music-league-purple: #9E00C4;
+  --music-league-purple-light: #b833d6;
+  --music-league-purple-dark: #7a0099;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--p-surface-900);
+}
+
+#app {
+  /* width: 400px;
+  min-height: 500px;
+  background: white; */
+}
+
+.p-music-league {
+  color: var(--music-league-purple) !important;
+}
+
+.p-music-league-bg {
+  background-color: var(--music-league-purple) !important;
+}
+
+.p-music-league-border {
+  border-color: var(--music-league-purple) !important;
+}
+
+/* Custom PrimeVue theme overrides */
+.p-button.p-button-primary {
+  background-color: var(--music-league-purple);
+  border-color: var(--music-league-purple);
+}
+
+.p-button.p-button-primary:hover {
+  background-color: var(--music-league-purple-light);
+  border-color: var(--music-league-purple-light);
+}
+
+.p-button.p-button-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.p-button.p-button-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
+
+.p-inputtext:focus {
+  border-color: var(--music-league-purple);
+  box-shadow: 0 0 0 0.2rem rgba(158, 0, 196, 0.25);
+}
+
+.p-tag {
+  background-color: var(--music-league-purple);
+  color: white;
+}
+
+/* Search results styling */
+.song-item {
+  border-left: 3px solid var(--music-league-purple);
+  padding-left: 12px;
+  margin-bottom: 8px;
+}
+
+.song-meta {
+  font-size: 0.8em;
+  color: #adb5bd;
+}
+
+/* Status indicators */
+.status-crawling {
+  color: var(--music-league-purple);
+  font-weight: 600;
+}
+
+.status-idle {
+  color: #6c757d;
+}
+
+.status-error {
+  color: #dc3545;
+} 
