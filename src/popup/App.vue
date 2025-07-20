@@ -62,6 +62,21 @@
 										:disabled="isCrawling" />
 								</div>
 
+								<div v-if="uncrawledRounds.length > 0 && !isCrawling" class="alert alert-warning d-flex align-items-center mb-3">
+									<i class="pi pi-exclamation-triangle me-2"></i>
+									<span>
+										{{ uncrawledRounds.length }} new round{{ uncrawledRounds.length > 1 ? 's have' : ' has' }} been completed but not crawled.
+									</span>
+									<Button
+										label="Crawl New Rounds"
+										icon="pi pi-refresh"
+										size="small"
+										class="ms-auto"
+										:disabled="isCrawling"
+										@click="() => { selectedCrawlMode = 'new'; startCrawl(); }"
+									/>
+								</div>
+
 								<div class="d-flex gap-2">
 									<Button v-if="!isCrawling" :label="getCrawlButtonLabel()"
 										:icon="getCrawlButtonIcon()" @click="startCrawl"
@@ -219,6 +234,12 @@ const filteredSongs = computed(() => {
 		song.submittedBy.toLowerCase().includes(query) ||
 		song.roundName.toLowerCase().includes(query)
 	)
+})
+
+const uncrawledRounds = computed(() => {
+	if (!crawlData.value || !availableRounds.value.length) return []
+	const crawledIds = new Set(crawlData.value.crawledRoundIds || [])
+	return availableRounds.value.filter(round => !crawledIds.has(round.id))
 })
 
 // Methods
