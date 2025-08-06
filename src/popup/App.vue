@@ -4,7 +4,7 @@
 
 		<!-- Main Content with Tabs -->
 		<div class="content p-3">
-			<Tabs value="0">
+			<Tabs v-model:value="selectedTab">
 				<TabList>
 					<Tab value="0">
 						<i class="pi pi-download me-2"></i>
@@ -30,20 +30,20 @@
 
 								<!-- Crawl Statistics -->
 								<div v-if="crawlData" class="mb-3 p-2 bg-light rounded">
-									<div class="row text-center">
-										<div class="col">
-											<div class="fw-bold">{{ crawlData.songs?.length || 0 }}</div>
-											<small class="text-muted">Songs</small>
-										</div>
-										<div class="col">
-											<div class="fw-bold">{{ crawlData.crawledRoundIds?.length || 0 }}</div>
-											<small class="text-muted">Rounds Crawled</small>
-										</div>
-										<div class="col">
-											<div class="fw-bold">{{ formatDate(crawlData.lastCrawled) }}</div>
-											<small class="text-muted">Last Crawl</small>
-										</div>
-									</div>
+									<table>
+										<tr>
+											<td>Songs</td>
+											<td>{{ crawlData.songs?.length || 0 }}</td>
+										</tr>
+										<tr>
+											<td>Rounds Crawled</td>
+											<td>{{ crawlData.crawledRoundIds?.length || 0 }}</td>
+										</tr>
+										<tr>
+											<td>Last Crawl</td>
+											<td>{{ formatDate(crawlData.lastCrawled) }}</td>
+										</tr>
+									</table>
 								</div>
 
 								<!-- Crawl Mode Selection -->
@@ -102,12 +102,17 @@
 							<template #content>
 								<div class="mb-3">
 									<InputText v-model="searchQuery" placeholder="Search by song title or artist..."
-										class="w-100" :disabled="isCrawling || songs.length === 0" />
+										style="width: 100%;" :disabled="isCrawling || songs.length === 0" />
 								</div>
 
 								<div v-if="songs.length === 0 && !isCrawling" class="text-center text-muted">
 									<i class="pi pi-info-circle fs-1 mb-2"></i>
 									<p>No songs found. Crawl your Music League first to search through songs.</p>
+								</div>
+
+								<div v-if="songs.length > 0 && !isCrawling && filteredSongs.length === 0" class="text-center text-muted">
+									<i class="pi pi-info-circle fs-1 mb-2"></i>
+									<p>No songs found for that search query.</p>
 								</div>
 
 								<div v-else-if="isCrawling" class="text-center">
@@ -116,27 +121,34 @@
 								</div>
 
 								<div v-else>
-									<DataTable :value="filteredSongs" :paginator="true"
-										paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-										:rows="5" currentPageReportTemplate="{first} to {last} of {totalRecords}"
-										stripedRows showGridlines responsiveLayout="scroll" scrollable autoLayout
-										style="width: 100%;">
+									<DataTable
+										:key="selectedTab"
+										:value="filteredSongs"
+										:virtualScrollerOptions="{ itemSize: 61.2 }"
+										scrollable 
+										scrollHeight="400px"
+										stripedRows
+										showGridlines
+										responsiveLayout="scroll"
+										autoLayout
+										style="width: 100%;"
+									>
 										<Column field="title" header="Title" sortable style="width: 25%">
 											<template #body="slotProps">
-												<div class="song-title fw-bold">{{ slotProps.data.title }}</div>
-												<div class="song-artist">{{ slotProps.data.artist }}</div>
+												<div class="song-title fw-bold">{{ decodeHtmlEntities(slotProps.data.title) }}</div>
+												<div class="song-artist">{{ decodeHtmlEntities(slotProps.data.artist) }}</div>
 
 											</template>
 										</Column>
 										<Column field="roundName" header="Round" sortable style="width: 20%">
 											<template #body="slotProps">
-												<Tag :value="slotProps.data.roundName" size="small"
+												<Tag :value="decodeHtmlEntities(slotProps.data.roundName)" size="small"
 													class="cursor-pointer" @click="openRound(slotProps.data)" />
 											</template>
 										</Column>
 										<Column field="submittedBy" header="Submitted By" sortable style="width: 20%">
 											<template #body="slotProps">
-												<span class="text-muted">{{ slotProps.data.submittedBy }}</span>
+												<span class="text-muted">{{ decodeHtmlEntities(slotProps.data.submittedBy) }}</span>
 											</template>
 										</Column>
 									</DataTable>
@@ -215,6 +227,7 @@ const crawlData = ref<CrawlData | null>(null)
 const availableRounds = ref<Round[]>([])
 const selectedCrawlMode = ref('all')
 const selectedRound = ref<string | null>(null)
+const selectedTab = ref("0")
 
 // Crawl mode options
 const crawlModes = [
@@ -223,16 +236,23 @@ const crawlModes = [
 	{ label: 'Crawl Specific Round', value: 'round' }
 ]
 
+// Helper function to decode HTML entities
+const decodeHtmlEntities = (text: string): string => {
+	const textarea = document.createElement('textarea')
+	textarea.innerHTML = text
+	return textarea.value
+}
+
 // Computed properties
 const filteredSongs = computed(() => {
-	if (!searchQuery.value.trim()) return songs.value
+	if (!searchQuery.value.trim()) return songs.value;
 
 	const query = searchQuery.value.toLowerCase()
 	return songs.value.filter(song =>
-		song.title.toLowerCase().includes(query) ||
-		song.artist.toLowerCase().includes(query) ||
-		song.submittedBy.toLowerCase().includes(query) ||
-		song.roundName.toLowerCase().includes(query)
+		decodeHtmlEntities(song.title).toLowerCase().includes(query) ||
+		decodeHtmlEntities(song.artist).toLowerCase().includes(query) ||
+		decodeHtmlEntities(song.submittedBy).toLowerCase().includes(query) ||
+		decodeHtmlEntities(song.roundName).toLowerCase().includes(query)
 	)
 })
 
@@ -449,6 +469,16 @@ watch(selectedCrawlMode, (newMode) => {
 
 :deep(.p-card-body) {
 	padding: 0;
+}
+
+.text-center {
+	text-align: center;
+}
+
+table td {
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	padding-right: 0.5rem;
 }
 
 .content {
