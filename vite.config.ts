@@ -31,6 +31,13 @@ export default defineConfig({
         background: {
           service_worker: 'src/background/index.ts'
         },
+        content_scripts: [
+          {
+            matches: ['https://*.musicleague.com/*'],
+            js: ['src/content/index.ts'],
+            run_at: 'document_end'
+          }
+        ],
         icons: {
           '16': 'icon-16.png',
           '32': 'icon-32.png',
@@ -49,7 +56,8 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        popup: resolve(__dirname, 'src/popup/index.html')
+        popup: resolve(__dirname, 'src/popup/index.html'),
+        content: resolve(__dirname, 'src/content/index.ts')
       }
     }
   }

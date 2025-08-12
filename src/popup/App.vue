@@ -234,6 +234,7 @@ import Tag from 'primevue/tag';
 import Toast from 'primevue/toast';
 import Popover from 'primevue/popover';
 import Checkbox from 'primevue/checkbox';
+import { decodeHtmlEntities } from '@/shared/utils';
 
 const popover = ref<typeof Popover | null>(null)
 const toggle = (event: Event) => {
@@ -296,11 +297,6 @@ const crawlModes = [
 ]
 
 // Helper function to decode HTML entities
-const decodeHtmlEntities = (text: string): string => {
-	const textarea = document.createElement('textarea')
-	textarea.innerHTML = text
-	return textarea.value
-}
 
 // Computed properties
 const filteredSongs = computed(() => {
