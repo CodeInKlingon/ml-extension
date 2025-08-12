@@ -10,6 +10,8 @@ interface Song {
   leagueId: string;
   leagueName: string;
   url: string;
+  voteCount: number;
+  voterCount: number;
 }
 
 interface League {
@@ -200,7 +202,15 @@ function parseSongsFromHtml(html: string, round: Round, leagueId: string): Song[
       const submitterMatch = cardHtml.match(/<h6[^>]*class="[^"]*fw-semibold[^"]*"[^>]*>([^<]+)<\/h6>/)
       const submittedBy = submitterMatch ? submitterMatch[1].trim() : 'Unknown User'
       
-      console.log(`  Song: "${title}" by ${artist} (submitted by ${submittedBy})`)
+      // Extract vote count from the h3 tag in the top-right corner
+      const voteCountMatch = cardHtml.match(/<h3 class="m-0">\s*(\d+)\s*<\/h3>/)
+      const voteCount = voteCountMatch ? parseInt(voteCountMatch[1], 10) : 0
+      
+      // Extract voter count from the text below the vote count
+      const voterCountMatch = cardHtml.match(/<p class="text-body-tertiary fw-semibold">(\d+) voters<\/p>/)
+      const voterCount = voterCountMatch ? parseInt(voterCountMatch[1], 10) : 0
+      
+      console.log(`  Song: "${title}" by ${artist} (submitted by ${submittedBy}) - ${voteCount} votes from ${voterCount} voters`)
       
       songs.push({
         id: songId,
@@ -211,7 +221,9 @@ function parseSongsFromHtml(html: string, round: Round, leagueId: string): Song[
         roundName: round.name,
         leagueId,
         leagueName: 'Music League',
-        url: `https://app.musicleague.com/l/${leagueId}/${round.id}/-/results`
+        url: `https://app.musicleague.com/l/${leagueId}/${round.id}/-/results`,
+        voteCount,
+        voterCount
       })
     })
   }

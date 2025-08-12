@@ -86,6 +86,19 @@
 										@click="cancelCrawl" class="flex-1" />
 								</div>
 
+								<!-- Clear Data Button -->
+								<div v-if="crawlData && crawlData.songs && crawlData.songs.length > 0" class="mt-3">
+									<Button 
+										label="Clear Crawled Data" 
+										icon="pi pi-trash" 
+										severity="danger" 
+										size="small"
+										@click="clearCrawledData"
+										:disabled="isCrawling"
+										class="w-100"
+									/>
+								</div>
+
 								<div v-if="!isOnMusicLeague" class="mt-2">
 									<small class="text-warning">
 										<i class="pi pi-exclamation-triangle me-1"></i>
@@ -100,19 +113,10 @@
 					<TabPanel value="1">
 						<Card>
 							<template #content>
-								<div class="mb-3">
-									<InputText v-model="searchQuery" placeholder="Search by song title or artist..."
-										style="width: 100%;" :disabled="isCrawling || songs.length === 0" />
-								</div>
 
 								<div v-if="songs.length === 0 && !isCrawling" class="text-center text-muted">
 									<i class="pi pi-info-circle fs-1 mb-2"></i>
 									<p>No songs found. Crawl your Music League first to search through songs.</p>
-								</div>
-
-								<div v-if="songs.length > 0 && !isCrawling && filteredSongs.length === 0" class="text-center text-muted">
-									<i class="pi pi-info-circle fs-1 mb-2"></i>
-									<p>No songs found for that search query.</p>
 								</div>
 
 								<div v-else-if="isCrawling" class="text-center">
@@ -121,7 +125,37 @@
 								</div>
 
 								<div v-else>
+									<div class="mb-3 d-flex align-items-center">
+										<InputText v-model="searchQuery" placeholder="Search by song title or artist..."
+											style="flex: 1" :disabled="isCrawling || songs.length === 0" />
+										<div>
+											<Button type="button" icon="pi pi-sliders-h" @click="toggle" aria-haspopup="true" aria-controls="overlay_menu" />
+											<Popover ref="popover">
+												<div>
+													<Checkbox v-model="columns.voteCount" binary inputId="voteCount" />
+													<label for="voteCount"> Score </label>													
+												</div>
+												<div>
+													<Checkbox v-model="columns.roundName" binary inputId="roundName" />
+													<label for="roundName"> Round Name </label>													
+												</div>
+												<div>
+													<Checkbox v-model="columns.submittedBy" binary inputId="submittedBy" />
+													<label for="submittedBy"> Submitted By </label>
+												</div>
+												<div>
+													<Checkbox v-model="columns.voterCount" binary inputId="voterCount" />
+													<label for="voterCount"> Voter Count </label>
+												</div>
+											</Popover>												
+										</div>
+									</div>
+									<div v-if="filteredSongs.length === 0" class="text-center text-muted">
+										<i class="pi pi-info-circle fs-1 mb-2"></i>
+										<p>No songs found for that search query.</p>
+									</div>
 									<DataTable
+										v-else
 										:key="selectedTab"
 										:value="filteredSongs"
 										:virtualScrollerOptions="{ itemSize: 61.2 }"
@@ -140,15 +174,25 @@
 
 											</template>
 										</Column>
-										<Column field="roundName" header="Round" sortable style="width: 20%">
+										<Column v-if="columns.roundName" field="roundName" header="Round" sortable style="width: 20%">
 											<template #body="slotProps">
 												<Tag :value="decodeHtmlEntities(slotProps.data.roundName)" size="small"
 													class="cursor-pointer" @click="openRound(slotProps.data)" />
 											</template>
 										</Column>
-										<Column field="submittedBy" header="Submitted By" sortable style="width: 20%">
+										<Column v-if="columns.submittedBy" field="submittedBy" header="Submitted By" sortable style="width: 20%">
 											<template #body="slotProps">
 												<span class="text-muted">{{ decodeHtmlEntities(slotProps.data.submittedBy) }}</span>
+											</template>
+										</Column>
+										<Column v-if="columns.voteCount" field="voteCount" header="Score" sortable style="width: 10%">
+											<template #body="slotProps">
+												<span class="text-muted">{{ slotProps.data.voteCount }}</span>
+											</template>
+										</Column>
+										<Column v-if="columns.voterCount" field="voterCount" header="Voter Count" sortable style="width: 10%">
+											<template #body="slotProps">
+												<span class="text-muted">{{ slotProps.data.voterCount }}</span>
 											</template>
 										</Column>
 									</DataTable>
@@ -188,7 +232,20 @@ import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
 import Tag from 'primevue/tag';
 import Toast from 'primevue/toast';
+import Popover from 'primevue/popover';
+import Checkbox from 'primevue/checkbox';
 
+const popover = ref<typeof Popover | null>(null)
+const toggle = (event: Event) => {
+    popover.value?.toggle(event);
+};
+
+const columns = ref({
+	voteCount: true,
+	roundName: true,
+	submittedBy: true,
+	voterCount: false,
+});
 
 interface Song {
 	id: string
@@ -200,6 +257,8 @@ interface Song {
 	leagueId: string
 	leagueName: string
 	url: string
+	voteCount: number
+	voterCount: number
 }
 
 interface Round {
@@ -358,6 +417,38 @@ const cancelCrawl = async () => {
 	}
 }
 
+const clearCrawledData = async () => {
+	try {
+		// Clear the crawl data from storage
+		await chrome.storage.local.remove('songs')
+		
+		// Clear the league-specific crawl data if we have a league ID
+		if (crawlData.value?.leagueId) {
+			await chrome.storage.local.remove(`crawlData_${crawlData.value.leagueId}`)
+		}
+		
+		// Reset local state
+		songs.value = []
+		crawlData.value = null
+		crawlStatus.value = 'Ready'
+		
+		toast.add({
+			severity: 'success',
+			summary: 'Data Cleared',
+			detail: 'All crawled data has been cleared successfully',
+			life: 3000
+		})
+	} catch (error) {
+		console.error('Clear data error:', error)
+		toast.add({
+			severity: 'error',
+			summary: 'Clear Failed',
+			detail: 'Failed to clear crawled data',
+			life: 5000
+		})
+	}
+}
+
 const openRound = (song: Song) => {
 	chrome.tabs.create({ url: song.url.replace(/-\/results$/, '') })
 }
@@ -461,6 +552,15 @@ watch(selectedCrawlMode, (newMode) => {
 </script>
 
 <style scoped>
+
+.mb-3{
+	margin-bottom: 0.5rem;
+
+}
+.d-flex {
+	display: flex;
+}
+
 .popup-container {
 	position: relative;
 	width: 700px;
