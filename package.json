@@ -1,6 +1,6 @@
 {
   "name": "music-league-extension",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A companion web extension for the music league website",
   "type": "module",
   "scripts": {
